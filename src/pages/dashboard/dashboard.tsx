@@ -6,8 +6,16 @@ import { getSession } from "next-auth/react";
 import { Textarea } from '@/components/textarea/textarea';
 import { FiShare2, } from "react-icons/fi";
 import { FaTrash, } from "react-icons/fa";
+import { db } from "../../services/firebase_connection";
+import { addDoc, collection } from "firebase/firestore"; 
 
-export default function Dashboard() {
+interface HomeProps {
+    user: {
+        email: string;
+    }
+}
+
+export default function Dashboard({ user }: HomeProps) {
     const [input, setInput] = useState("");
     const [publicTask, setPublicTask] = useState(false);
 
@@ -15,14 +23,26 @@ export default function Dashboard() {
         setPublicTask(event.target.checked)
     }
 
-    function registerTask(event: FormEvent) {
+    async function registerTask(event: FormEvent) {
         event.preventDefault();
 
         if (input === '') {
             return;
         }
 
-        alert('teste');
+        try {
+            await addDoc(collection(db, "tarefas"), {
+                tarefa: input,
+                created: new Date(),
+                user: user?.email,
+                public: publicTask,
+            });
+
+            setInput("");
+            setPublicTask(false);
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     return(
@@ -40,7 +60,7 @@ export default function Dashboard() {
                             <Textarea 
                                 placeholder='Digite qual sua tarefa' 
                                 value={input} 
-                                onChange={(event:ChangeEvent<HTMLTextAreaElement>) => setInput(event.target.value)}
+                                onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setInput(event.target.value)}
                             />
 
                             <div className={styles.checkboxArea}>
@@ -51,10 +71,10 @@ export default function Dashboard() {
                                     onChange={handleChangePublic}
                                 />
 
-                                <label>Deixar tarefa publica</label>
+                                <label>Deixar tarefa publica?</label>
                             </div>
 
-                            <button className={styles.button} type='submit'>
+                            <button className={styles.button} type="submit">
                                 Registrar
                             </button>
                         </form>
@@ -100,6 +120,10 @@ export const getServerSideProps: GetServerSideProps = async ({req}) => {
     }
 
     return {
-        props: {}
+        props: {
+            user: {
+                email: session?.user?.email,
+            }
+        }
     };
 };
