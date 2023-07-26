@@ -36,3 +36,4 @@ next-env.d.ts
 
 # configurações
 .env
+src/services/firebase_connection.ts

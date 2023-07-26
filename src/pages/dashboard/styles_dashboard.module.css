@@ -23,13 +23,13 @@
     margin-bottom: 8px;
 }
 
-.checkboxArea {
-    margin: 14px 0;
-}
-
 .checkboxArea label {
     margin-left: 8px;
     color: #FFF;
+}
+
+.checkboxArea {
+    margin: 14px 0;
 }
 
 .checkbox {
