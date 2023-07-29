@@ -2,10 +2,11 @@ import Head from "next/head";
 import styles from "./styles.module.css";
 import { GetServerSideProps } from "next";
 import { db } from "../../services/firebase_connection";
-import { collection, query, where, doc, getDoc , addDoc, getDocs} from "firebase/firestore";
+import { collection, query, where, doc, getDoc , addDoc, getDocs, deleteDoc} from "firebase/firestore";
 import { Textarea } from '@/components/textarea/textarea';
-import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import { useState, ChangeEvent, FormEvent } from 'react';
 import { useSession } from "next-auth/react";
+import { FaTrash, } from "react-icons/fa";
 
 interface TaskProps {
     item: {
@@ -46,8 +47,32 @@ export default function Task({ item, allComments }: TaskProps) {
                 name: session?.user?.name,
                 taskId: item?.id,
             });
+
+            const data = {
+                id: docRef.id,
+                comment: input,
+                user: session?.user?.email,
+                name: session?.user?.name,
+                taskId: item?.id,
+            };
+
+            setComments((oldItems) => [...oldItems, data]);
             
             setInput("");
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+
+    async function deleteComment(id: string) {
+        try {
+            const docRef = doc(db, "comments", id);
+            await deleteDoc(docRef);
+
+            const deleteComment = comments.filter((item) => item.id !== id);
+
+            setComments(deleteComment);
         } catch (error) {
             console.log(error);
         }
@@ -75,7 +100,7 @@ export default function Task({ item, allComments }: TaskProps) {
                         placeholder="Digite seu comentário..."
                     />
 
-                    <button disabled={!session?.user} className={styles.button} type="submit">
+                    <button disabled={!session?.user} className={styles.button}>
                         Enviar comentário
                     </button>
                 </form>
@@ -89,6 +114,16 @@ export default function Task({ item, allComments }: TaskProps) {
 
                 {comments.map((item) => (
                     <article key={item.id} className={styles.comment}>
+                        <div className={styles.headComment}>
+                            <label className={styles.commentLabel}>{item.name}</label>
+
+                            {item.user === session?.user?.email && (
+                                <button className={styles.buttonTrash} onClick={() => deleteComment(item.id)}>
+                                    <FaTrash size={18} color="#EA3140"/>
+                                </button>
+                            )}
+                        </div>
+
                         <p>{item.comment}</p>
                     </article>
                 ))}
